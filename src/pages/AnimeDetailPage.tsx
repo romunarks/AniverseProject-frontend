@@ -13,6 +13,7 @@ import { RatingComponent } from '../components/RatingComponent';
 import { ResenyasList } from '../components/ResenyasList';
 import { AnimeRatingDisplay } from '../components/AnimeRatingDisplay';
 import { useResenyas } from '../hooks/useResenyas';
+import { BackButton } from '../components/BackButton';
 
 export const AnimeDetailPage: React.FC = () => {
     const { id: animeIdFromParams } = useParams<{ id: string }>();
@@ -33,13 +34,12 @@ export const AnimeDetailPage: React.FC = () => {
     // Hook para manejar reseñas
     const {
         resenyas,
-        //loading: resenyasLoading,
         totalElements: totalResenyas,
         canUserReview,
         refresh: refreshResenyas
     } = useResenyas({
-        animeId: anime?.id || undefined, // ✅ CAMBIAR: agregar || undefined
-        jikanId: anime?.jikanId || undefined,
+        animeId: anime?.id || undefined,
+        // ✅ ELIMINADO jikanId DE AQUÍ PARA EVITAR CONFUSIONES CON LA API
         autoLoad: !!anime,
         pageSize: 5
     });
@@ -242,6 +242,7 @@ export const AnimeDetailPage: React.FC = () => {
     if (loading) {
         return (
             <div className="container mx-auto px-4 py-16 flex justify-center">
+                <BackButton /> {/* ✅ BOTÓN MÁGICO AÑADIDO */}
                 <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-aniverse-pink"></div>
             </div>
         );

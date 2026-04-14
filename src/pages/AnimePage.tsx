@@ -1,9 +1,11 @@
 // src/pages/AnimePage.tsx - CORREGIDO SIN SEARCHBAR DUPLICADO
-import React, { useState, useEffect } from 'react';
+// src/pages/AnimePage.tsx
+import React, { useState, useEffect } from 'react'; //
 import { Anime } from '../types';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 import AnimeCard from '../components/AnimeCard';
+import { animeService } from '../services/animeService'; //
 
 export const AnimePage: React.FC = () => {
     const [animes, setAnimes] = useState<Anime[]>([]);
@@ -16,38 +18,25 @@ export const AnimePage: React.FC = () => {
         const fetchAnimes = async () => {
             try {
                 setLoading(true);
-                console.log('🔄 Cargando animes paginados - página:', page);
+                // ✅ USAR EL SERVICIO QUE YA TIENE EL PROXY Y LOS TOKENS
+                const data = await animeService.getRealAnimesPaginated(page, 12);
 
-                // ✅ LLAMADA DIRECTA AL ENDPOINT CORRECTO
-                const response = await fetch(`http://localhost:8080/api/animes?page=${page}&size=12&sortBy=id&sortDir=desc`);
-                const data = await response.json();
-
-                console.log('📊 Datos recibidos del backend:', data);
-
-                // ✅ TU BACKEND DEVUELVE UN MAP DIRECTO, NO AniverseResponse
-                setAnimes(data.animes || []);
+                // Ajuste según el formato real de tu backend
+                setAnimes(data.content || []);
                 setTotalPages(data.totalPages || 0);
                 setError(null);
-
-                console.log('✅ Animes establecidos:', data.animes?.length || 0);
-
-            } catch (err) {
-                console.error('❌ Error al cargar animes:', err);
-                setError('No se pudieron cargar los animes. Intenta de nuevo más tarde.');
-                setAnimes([]); // Limpiar animes en caso de error
+            } catch (err: unknown) {
+                const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
+                console.error('❌ Error:', errorMessage);
+                setError('No se pudieron cargar los animes.');
             } finally {
                 setLoading(false);
             }
         };
-
-        // ✅ EJECUTAR LA FUNCIÓN ASYNC CORRECTAMENTE
-        fetchAnimes().catch(err => {
-            console.error('Error en useEffect:', err);
-            setError('Error inesperado al cargar los animes.');
-            setLoading(false);
-        });
+        void fetchAnimes();
     }, [page]);
 
+    // ... mantener el resto de funciones handleNextPage, handlePrevPage y el return igual
     const handleNextPage = () => {
         if (page < totalPages - 1) {
             setPage(page + 1);
@@ -59,6 +48,19 @@ export const AnimePage: React.FC = () => {
             setPage(page - 1);
         }
     };
+    // src/pages/AnimePage.tsx
+
+    if (error) {
+        return (
+            <div className="text-center py-20">
+                <p className="text-xl text-white">Estamos teniendo problemas para conectar con la fuente de anime.</p>
+                <p className="text-aniverse-cyan mt-2">Mostrando resultados guardados localmente...</p>
+                <button onClick={() => window.location.reload()} className="mt-4 px-4 py-2 bg-aniverse-purple rounded">
+                    Reintentar conexión
+                </button>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen flex flex-col">

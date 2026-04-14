@@ -1,6 +1,6 @@
 // src/services/votacionService.ts
 import api from '../api';
-import { AniverseResponse, Votacion } from '../types';
+import { AniverseResponse } from '../types'; // ✅ Se eliminó 'Votacion' que no se usaba
 import { AxiosError } from 'axios';
 
 /**
@@ -24,54 +24,58 @@ export interface VotacionResponseDTO {
     puntuacion: number;
 }
 
-
-// Obtener votación del usuario por JikanId
-export const getVotacionUsuarioAnimeByJikanId = async (userId: number, jikanId: number): Promise<any> => {
-    try {
-        const response = await api.get(`/votaciones/usuario/${userId}/jikan/${jikanId}`);
-        return response.data.success ? response.data.data : null;
-    } catch (error) {
-        console.error('Error getting user rating by JikanId:', error);
-        return null;
-    }
-};
-
 /**
  * Servicio para gestionar votaciones/calificaciones
  */
 export const votacionService = {
+
     /**
-     * Crear una nueva votación para un anime
-     * @returns Promise con la votación creada
-     * @param payload
+     * Obtener votación del usuario por JikanId
+     * ✅ Se cambió 'any' por 'VotacionResponseDTO | null'
      */
-    createVotacion: async (payload: any): Promise<any> => {
+    getVotacionUsuarioAnimeByJikanId: async (userId: number, jikanId: number): Promise<VotacionResponseDTO | null> => {
         try {
-            const response = await api.post('/votaciones', payload);
-            return response.data;
+            const response = await api.get<AniverseResponse<VotacionResponseDTO>>(`/votaciones/usuario/${userId}/jikan/${jikanId}`);
+            return response.data.success ? response.data.data : null;
         } catch (error) {
-            console.error('Error creating rating:', error);
-            throw error;
+            handleServiceError('Error getting user rating by JikanId:', error);
+            return null;
         }
     },
 
-// AGREGAR también este método:
-    getUserVotacion: async (jikanId: number) => {
+    /**
+     * Crear una nueva votación para un anime (UPSERT)
+     * ✅ Se usó 'VotacionCreateDTO' y 'VotacionResponseDTO' en lugar de 'any'
+     * ✅ Se limpió el throw atrapado localmente
+     */
+    createVotacion: async (payload: VotacionCreateDTO): Promise<VotacionResponseDTO> => {
+        try {
+            const response = await api.post<AniverseResponse<VotacionResponseDTO>>('/votaciones', payload);
+            if (response.data.success) {
+                return response.data.data;
+            }
+            throw new Error(response.data.message || 'Error al guardar la votación');
+        } catch (error) {
+            handleServiceError('Error creating rating:', error);
+            throw getErrorMessage(error);
+        }
+    },
+
+    /**
+     * ✅ Se definió el tipo de retorno para evitar 'any'
+     */
+    getUserVotacion: async (jikanId: number): Promise<{ data: { hasVoted: boolean; rating: number } }> => {
         try {
             const response = await api.get(`/votaciones/user/${jikanId}`);
             return response.data;
         } catch (error) {
-            console.error('Error getting user rating:', error);
+            handleServiceError('Error getting user rating:', error);
             return { data: { hasVoted: false, rating: 0 } };
         }
     },
 
     /**
      * Obtener votaciones de un usuario
-     * @param usuarioId ID del usuario
-     * @param page Número de página
-     * @param size Tamaño de página
-     * @returns Promise con las votaciones del usuario
      */
     getVotacionesByUsuario: async (usuarioId: number, page: number = 0, size: number = 10): Promise<VotacionResponseDTO[]> => {
         try {
@@ -92,9 +96,6 @@ export const votacionService = {
 
     /**
      * Obtener votación específica de un usuario para un anime
-     * @param usuarioId ID del usuario
-     * @param animeId ID del anime
-     * @returns Promise con la votación o null si no existe
      */
     getVotacionUsuarioAnime: async (usuarioId: number, animeId: number): Promise<VotacionResponseDTO | null> => {
         try {
@@ -118,8 +119,6 @@ export const votacionService = {
 
     /**
      * Obtener conteo de votaciones para un anime
-     * @param animeId ID del anime
-     * @returns Promise con el conteo de votaciones
      */
     getVotacionesCount: async (animeId: number): Promise<number> => {
         try {
@@ -138,8 +137,7 @@ export const votacionService = {
 
     /**
      * Eliminar una votación
-     * @param votacionId ID de la votación
-     * @returns Promise con mensaje de confirmación
+     * ✅ Se limpió el throw atrapado localmente
      */
     deleteVotacion: async (votacionId: number): Promise<string> => {
         try {

@@ -137,13 +137,13 @@ const AnimeCard: React.FC<AnimeCardProps> = ({
 
                 {/* Información del anime */}
                 <div className="p-3">
-                    <h3 className="font-semibold text-gray-800 line-clamp-2 group-hover:text-aniverse-purple transition-colors duration-200 mb-2">
+                    <h3 className="font-semibold text-gray-800 line-clamp-4 group-hover:text-aniverse-purple transition-colors duration-200 mb-2">
                         {anime.titulo}
                     </h3>
 
                     {/* Descripción truncada */}
                     {anime.descripcion && (
-                        <p className="text-gray-600 text-sm line-clamp-2 mb-3">
+                        <p className="text-gray-600 text-sm line-clamp-4 mb-3">
                             {anime.descripcion}
                         </p>
                     )}
